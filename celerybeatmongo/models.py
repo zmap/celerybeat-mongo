@@ -17,6 +17,10 @@ def get_periodic_task_collection():
     return "schedules"
 
 
+#: Authorized values for PeriodicTask.Interval.period
+PERIODS = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
+
+
 class PeriodicTask(Document):
     """mongo database model that represents a periodic task"""
 
@@ -25,7 +29,7 @@ class PeriodicTask(Document):
 
     class Interval(EmbeddedDocument):
         every = IntField(min_value=0)
-        period = StringField()
+        period = StringField(choices=PERIODS)
 
         @property
         def schedule(self):
