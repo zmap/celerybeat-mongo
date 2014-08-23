@@ -41,11 +41,11 @@ class PeriodicTask(Document):
             return _('every {0.every} {0.period}').format(self)
 
     class Crontab(EmbeddedDocument):
-        minute = StringField()
-        hour = StringField()
-        day_of_week = StringField()
-        day_of_month = StringField()
-        month_of_year = StringField()
+        minute = StringField(default='*', required=True)
+        hour = StringField(default='*', required=True)
+        day_of_week = StringField(default='*', required=True)
+        day_of_month = StringField(default='*', required=True)
+        month_of_year = StringField(default='*', required=True)
 
         @property
         def schedule(self):
