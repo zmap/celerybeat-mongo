@@ -28,7 +28,7 @@ class PeriodicTask(Document):
             'allow_inheritance': True}
 
     class Interval(EmbeddedDocument):
-        every = IntField(min_value=0)
+        every = IntField(min_value=0, default=0, required=True)
         period = StringField(choices=PERIODS)
 
         @property
@@ -66,8 +66,8 @@ class PeriodicTask(Document):
                 rfield(self.day_of_month), rfield(self.month_of_year),
             )
 
-    name = StringField()
-    task = StringField()
+    name = StringField(unique=True)
+    task = StringField(required=True)
 
     type_ = StringField()
     interval = EmbeddedDocumentField(Interval)
@@ -81,7 +81,7 @@ class PeriodicTask(Document):
     routing_key = StringField()
 
     expires = DateTimeField()
-    enabled = BooleanField()
+    enabled = BooleanField(default=False)
 
     last_run_at = DateTimeField()
 
