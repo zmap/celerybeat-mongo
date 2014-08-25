@@ -41,8 +41,8 @@ class PeriodicTask(Document):
 
         def __unicode__(self):
             if self.every == 1:
-                return _('every {0.period_singular}').format(self)
-            return _('every {0.every} {0.period}').format(self)
+                return 'every {0.period_singular}'.format(self)
+            return 'every {0.every} {0.period}'.format(self)
 
     class Crontab(EmbeddedDocument):
         minute = StringField(default='*', required=True)
