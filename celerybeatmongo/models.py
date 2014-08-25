@@ -28,6 +28,8 @@ class PeriodicTask(Document):
             'allow_inheritance': True}
 
     class Interval(EmbeddedDocument):
+        meta = {'allow_inheritance': True}
+
         every = IntField(min_value=0, default=0, required=True)
         period = StringField(choices=PERIODS)
 
@@ -41,10 +43,12 @@ class PeriodicTask(Document):
 
         def __unicode__(self):
             if self.every == 1:
-                return _('every {0.period_singular}').format(self)
-            return _('every {0.every} {0.period}').format(self)
+                return 'every {0.period_singular}'.format(self)
+            return 'every {0.every} {0.period}'.format(self)
 
     class Crontab(EmbeddedDocument):
+        meta = {'allow_inheritance': True}
+
         minute = StringField(default='*', required=True)
         hour = StringField(default='*', required=True)
         day_of_week = StringField(default='*', required=True)
