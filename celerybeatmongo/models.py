@@ -113,7 +113,7 @@ class PeriodicTask(Document):
         elif self.crontab:
             return self.crontab.schedule
         else:
-            raise Exception("must define internal or crontab schedule")
+            raise Exception("must define interval or crontab schedule")
 
     def __unicode__(self):
         fmt = '{0.name}: {{no schedule}}'
@@ -122,5 +122,5 @@ class PeriodicTask(Document):
         elif self.crontab:
             fmt = '{0.name}: {0.crontab}'
         else:
-            raise Exception("must define internal or crontab schedule")
+            raise Exception("must define interval or crontab schedule")
         return fmt.format(self)
