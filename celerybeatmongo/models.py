@@ -76,7 +76,7 @@ class PeriodicTask(Document):
     interval = EmbeddedDocumentField(Interval)
     crontab = EmbeddedDocumentField(Crontab)
 
-    args = ListField(StringField())
+    args = ListField()
     kwargs = DictField()
 
     queue = StringField()
