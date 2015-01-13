@@ -92,6 +92,8 @@ class PeriodicTask(Document):
 
     date_changed = DateTimeField()
     description = StringField()
+    
+    run_immediately = BooleanField()
 
     #objects = managers.PeriodicTaskManager()
     no_changes = False
