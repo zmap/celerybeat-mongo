@@ -46,6 +46,7 @@ class MongoScheduleEntry(ScheduleEntry):
     def next(self):
         self._task.last_run_at = self.app.now()
         self._task.total_run_count += 1
+        self._task.run_immediately = False
         return self.__class__(self._task)
 
     __next__ = next
@@ -53,6 +54,10 @@ class MongoScheduleEntry(ScheduleEntry):
     def is_due(self):
         if not self._task.enabled:
             return False, 5.0   # 5 second delay for re-enable.
+        if self._task.run_immediately:
+            # figure out when the schedule would run next anyway
+            _, n = self.schedule.is_due(self.last_run_at)
+            return True, n
         return self.schedule.is_due(self.last_run_at)
 
     def __repr__(self):
@@ -70,6 +75,7 @@ class MongoScheduleEntry(ScheduleEntry):
             self._task.total_run_count = self.total_run_count
         if self.last_run_at and self._task.last_run_at and self.last_run_at > self._task.last_run_at:
             self._task.last_run_at = self.last_run_at
+        self._task.run_immediately = False
         self._task.save()
 
 
@@ -77,7 +83,7 @@ class MongoScheduler(Scheduler):
 
     #: how often should we sync in schedule information
     #: from the backend mongo database
-    UPDATE_INTERVAL = datetime.timedelta(seconds=60)
+    UPDATE_INTERVAL = datetime.timedelta(seconds=5)
 
     Entry = MongoScheduleEntry
 
@@ -101,7 +107,7 @@ class MongoScheduler(Scheduler):
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
-                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 300)
+                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
     def setup_schedule(self):
         pass
