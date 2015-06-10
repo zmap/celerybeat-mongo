@@ -76,7 +76,7 @@ class PeriodicTask(DynamicDocument):
     interval = EmbeddedDocumentField(Interval)
     crontab = EmbeddedDocumentField(Crontab)
 
-    args = ListField(StringField())
+    args = ListField()
     kwargs = DictField()
 
     queue = StringField()
@@ -92,6 +92,8 @@ class PeriodicTask(DynamicDocument):
 
     date_changed = DateTimeField()
     description = StringField()
+    
+    run_immediately = BooleanField()
 
     #objects = managers.PeriodicTaskManager()
     no_changes = False
@@ -113,7 +115,7 @@ class PeriodicTask(DynamicDocument):
         elif self.crontab:
             return self.crontab.schedule
         else:
-            raise Exception("must define internal or crontab schedule")
+            raise Exception("must define interval or crontab schedule")
 
     def __unicode__(self):
         fmt = '{0.name}: {{no schedule}}'
@@ -122,5 +124,5 @@ class PeriodicTask(DynamicDocument):
         elif self.crontab:
             fmt = '{0.name}: {0.crontab}'
         else:
-            raise Exception("must define internal or crontab schedule")
+            raise Exception("must define interval or crontab schedule")
         return fmt.format(self)
