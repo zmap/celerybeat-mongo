@@ -21,7 +21,7 @@ def get_periodic_task_collection():
 PERIODS = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
 
 
-class PeriodicTask(Document):
+class PeriodicTask(DynamicDocument):
     """mongo database model that represents a periodic task"""
 
     meta = {'collection': get_periodic_task_collection(),
