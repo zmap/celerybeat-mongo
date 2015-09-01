@@ -19,7 +19,7 @@ similar to how other aspects of Celery are configured::
     CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
     CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
 
-If not settings are specified, the library will attempt to use the
+If note settings are specified, the library will attempt to use the
 schedules collection in the local celery database.
 
 Schedules can be manipulated in the Mongo database using the
