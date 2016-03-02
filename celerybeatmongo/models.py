@@ -82,6 +82,7 @@ class PeriodicTask(DynamicDocument):
     queue = StringField()
     exchange = StringField()
     routing_key = StringField()
+    soft_time_limit = IntField()
 
     expires = DateTimeField()
     enabled = BooleanField(default=False)
