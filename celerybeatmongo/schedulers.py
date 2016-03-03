@@ -30,7 +30,8 @@ class MongoScheduleEntry(ScheduleEntry):
             'queue': self._task.queue,
             'exchange': self._task.exchange,
             'routing_key': self._task.routing_key,
-            'expires': self._task.expires
+            'expires': self._task.expires,
+            'soft_time_limit': self._task.soft_time_limit
         }
         if self._task.total_run_count is None:
             self._task.total_run_count = 0
