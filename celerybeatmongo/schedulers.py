@@ -62,10 +62,10 @@ class MongoScheduleEntry(ScheduleEntry):
         return self.schedule.is_due(self.last_run_at)
 
     def __repr__(self):
-        return '<MongoScheduleEntry ({0} {1}(*{2}, **{3}) {{4}})>'.format(
+        return (u'<MongoScheduleEntry ({0} {1}(*{2}, **{3}) {{4}})>'.format(
             self.name, self.task, self.args,
             self.kwargs, self.schedule,
-        )
+        ))
 
     def reserve(self, entry):
         new_entry = Scheduler.reserve(self, entry)

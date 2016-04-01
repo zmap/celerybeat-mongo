@@ -19,15 +19,20 @@ similar to how other aspects of Celery are configured::
     CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
     CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
 
-If note settings are specified, the library will attempt to use the
-schedules collection in the local celery database.
+If no settings are specified, the library will attempt to use the
+**schedules** collection in the local **celery** database.
 
 Schedules can be manipulated in the Mongo database using the
 mongoengine models in celerybeatmongo.models or through
 direct database manipulation. There exist two types of schedules,
 interval and crontab.
 
-Please not because we read models using MongoEngine, objects must have `_cls` set to `PeriodicTask`.
+**IMPORTANT**: because Mongoengine (http://mongoengine-odm.readthedocs.org/) is used to read 
+	the database, objects must have a field `_cls` set to `PeriodicTask`.  Why?  Because 
+	Mongoengine allows Document Inheritance (by default: on), which automatically adds extra 
+	fields indices (**_cls**) 
+	(http://docs.mongoengine.org/guide/defining-documents.html?highlight=Document%20Inheritance).
+	
 
 Interval::
 
@@ -68,6 +73,7 @@ Becomes the following::
 
     {
         "_id" : ObjectId("53a91dfd455d1c1a4345fb59"),
+        "_cls": "PeriodicTask",
         "name" : "crontab test schedule",
         "task" : "task-name-goes-here",
         "enabled" : true,
@@ -113,6 +119,7 @@ Becomes::
 
 	{
 	    "_id" : ObjectId("53a91dfd455d1c1a4345fb59"),
+        "_cls": "PeriodicTask",
 	    "name" : "add-every-monday-morning",
 	    "task" : "tasks.add",
 	    "enabled" : true,
