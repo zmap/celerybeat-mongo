@@ -118,7 +118,7 @@ Becomes::
 
 	{
 	    "_id" : ObjectId("53a91dfd455d1c1a4345fb59"),
-        "_cls": "PeriodicTask",
+	    "_cls": "PeriodicTask",
 	    "name" : "add-every-monday-morning",
 	    "task" : "tasks.add",
 	    "enabled" : true,
