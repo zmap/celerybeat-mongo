@@ -104,7 +104,6 @@ The example from Celery User Guide::Periodic Tasks.
 (see: http://docs.celeryproject.org/en/latest/userguide/periodic-tasks.html#crontab-schedules)::
 
 	{
-
 		CELERYBEAT_SCHEDULE = {
 		    # Executes every Monday morning at 7:30 A.M
 		    'add-every-monday-morning': {
