@@ -99,12 +99,12 @@ class MongoScheduler(Scheduler):
             self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                    db, get_periodic_task_collection())
+                    db, self.Model._get_collection().name)
         else:
             self._mongo = mongoengine.connect(db)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     "mongodb://localhost",
-                    db, get_periodic_task_collection())
+                    db, self.Model._get_collection().name)
 
         self._schedule = {}
         self._last_updated = None
