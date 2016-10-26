@@ -88,6 +88,8 @@ class MongoScheduler(Scheduler):
 
     Entry = MongoScheduleEntry
 
+    Model = PeriodicTask
+
     def __init__(self, *args, **kwargs):
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
             db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
@@ -123,8 +125,8 @@ class MongoScheduler(Scheduler):
     def get_from_database(self):
         self.sync()
         d = {}
-        for doc in PeriodicTask.objects():
-            d[doc.name] = MongoScheduleEntry(doc)
+        for doc in self.Model.objects():
+            d[doc.name] = self.Entry(doc)
         return d
 
     @property
