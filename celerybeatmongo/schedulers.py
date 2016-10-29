@@ -7,7 +7,7 @@
 import mongoengine
 import datetime
 
-from celerybeatmongo.models import *
+from celerybeatmongo.models import PeriodicTask
 from celery.beat import Scheduler, ScheduleEntry
 from celery.utils.log import get_logger
 from celery import current_app
@@ -62,7 +62,8 @@ class MongoScheduleEntry(ScheduleEntry):
         return self.schedule.is_due(self.last_run_at)
 
     def __repr__(self):
-        return (u'<MongoScheduleEntry ({0} {1}(*{2}, **{3}) {{4}})>'.format(
+        return (u'<{0} ({1} {2}(*{3}, **{4}) {{5}})>'.format(
+            self.__class__.__name__,
             self.name, self.task, self.args,
             self.kwargs, self.schedule,
         ))
@@ -88,6 +89,8 @@ class MongoScheduler(Scheduler):
 
     Entry = MongoScheduleEntry
 
+    Model = PeriodicTask
+
     def __init__(self, *args, **kwargs):
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
             db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
@@ -97,12 +100,12 @@ class MongoScheduler(Scheduler):
             self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                    db, get_periodic_task_collection())
+                    db, self.Model._get_collection().name)
         else:
             self._mongo = mongoengine.connect(db)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     "mongodb://localhost",
-                    db, get_periodic_task_collection())
+                    db, self.Model._get_collection().name)
 
         self._schedule = {}
         self._last_updated = None
@@ -123,8 +126,8 @@ class MongoScheduler(Scheduler):
     def get_from_database(self):
         self.sync()
         d = {}
-        for doc in PeriodicTask.objects():
-            d[doc.name] = MongoScheduleEntry(doc)
+        for doc in self.Model.objects():
+            d[doc.name] = self.Entry(doc)
         return d
 
     @property
