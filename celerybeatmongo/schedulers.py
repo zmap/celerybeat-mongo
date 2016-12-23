@@ -78,7 +78,10 @@ class MongoScheduleEntry(ScheduleEntry):
         if self.last_run_at and self._task.last_run_at and self.last_run_at > self._task.last_run_at:
             self._task.last_run_at = self.last_run_at
         self._task.run_immediately = False
-        self._task.save()
+        try:
+            self._task.save(save_condition={})
+        except Exception:
+            get_logger(__name__).error(traceback.format_exc())
 
 
 class MongoScheduler(Scheduler):
