@@ -56,6 +56,9 @@ class MongoScheduleEntry(ScheduleEntry):
     def is_due(self):
         if not self._task.enabled:
             return False, 5.0   # 5 second delay for re-enable.
+        if hasattr(self._task, 'max_run_count') and self._task.max_run_count:
+            if (self._task.total_run_count or 0) >= self._task.max_run_count:
+                return False, 5.0
         if self._task.run_immediately:
             # figure out when the schedule would run next anyway
             _, n = self.schedule.is_due(self.last_run_at)
