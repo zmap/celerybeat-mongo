@@ -56,6 +56,9 @@ class MongoScheduleEntry(ScheduleEntry):
     def is_due(self):
         if not self._task.enabled:
             return False, 5.0   # 5 second delay for re-enable.
+        if hasattr(self._task, 'start_after') and self._task.start_after:
+            if datetime.datetime.now() < self._task.start_after:
+                return False, 5.0
         if hasattr(self._task, 'max_run_count') and self._task.max_run_count:
             if (self._task.total_run_count or 0) >= self._task.max_run_count:
                 return False, 5.0
