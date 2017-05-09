@@ -20,9 +20,9 @@ class MongoScheduleEntry(ScheduleEntry):
         self._task = task
 
         self.app = current_app._get_current_object()
-        self.id = self._task.id
         self.name = self._task.name
         self.task = self._task.task
+        self.id = self._task.id
 
         self.schedule = self._task.schedule
 
@@ -138,7 +138,7 @@ class MongoScheduler(Scheduler):
     def get_from_database(self):
         self.sync()
         d = {}
-        for doc in self.Model.objects():
+        for doc in self.Model.objects(enabled=True):
             d[doc.name] = self.Entry(doc)
         return d
 
@@ -153,9 +153,18 @@ class MongoScheduler(Scheduler):
     @property
     def schedule(self):
         if self.requires_update():
+            _schedule_bk = self._schedule.viewkeys()
             self._schedule = self.get_from_database()
+            print '_schedule_bk'
+            print _schedule_bk
+            print 'self._schedule.viewkeys()'
+            print self._schedule.viewkeys()
+            if self._schedule.viewkeys() != _schedule_bk:
+                if self._heap and _schedule_bk is not None:
+                    print 'self._heap'
+                    print self._heap
+                    self._heap = None
             self._last_updated = datetime.datetime.now()
-            self._heap = None
         return self._schedule
 
     def sync(self):
