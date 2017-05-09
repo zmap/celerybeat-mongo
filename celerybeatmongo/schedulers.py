@@ -7,6 +7,7 @@
 import mongoengine
 import traceback
 import datetime
+import copy
 
 from celerybeatmongo.models import PeriodicTask
 from celery.beat import Scheduler, ScheduleEntry
@@ -153,14 +154,15 @@ class MongoScheduler(Scheduler):
     @property
     def schedule(self):
         if self.requires_update():
-            _schedule_bk = self._schedule.viewkeys()
+            _schedule_bk = self._schedule.keys()
+            print _schedule_bk
             self._schedule = self.get_from_database()
             print '_schedule_bk'
             print _schedule_bk
-            print 'self._schedule.viewkeys()'
-            print self._schedule.viewkeys()
-            if self._schedule.viewkeys() != _schedule_bk:
-                if self._heap and _schedule_bk is not None:
+            print 'self._schedule.keys()'
+            print self._schedule.keys()
+            if self._schedule.keys() != _schedule_bk:
+                if self._heap is not None and _schedule_bk is not None:
                     print 'self._heap'
                     print self._heap
                     self._heap = None
