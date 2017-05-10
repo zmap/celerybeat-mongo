@@ -5,11 +5,9 @@
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 import mongoengine
-import traceback
 import datetime
-import copy
 
-from celerybeatmongo.models import PeriodicTask
+from celerybeatmongo.models import *
 from celery.beat import Scheduler, ScheduleEntry
 from celery.utils.log import get_logger
 from celery import current_app
@@ -23,7 +21,6 @@ class MongoScheduleEntry(ScheduleEntry):
         self.app = current_app._get_current_object()
         self.name = self._task.name
         self.task = self._task.task
-        self.id = self._task.id
 
         self.schedule = self._task.schedule
 
@@ -33,8 +30,7 @@ class MongoScheduleEntry(ScheduleEntry):
             'queue': self._task.queue,
             'exchange': self._task.exchange,
             'routing_key': self._task.routing_key,
-            'expires': self._task.expires,
-            'soft_time_limit': self._task.soft_time_limit
+            'expires': self._task.expires
         }
         if self._task.total_run_count is None:
             self._task.total_run_count = 0
@@ -58,12 +54,6 @@ class MongoScheduleEntry(ScheduleEntry):
     def is_due(self):
         if not self._task.enabled:
             return False, 5.0   # 5 second delay for re-enable.
-        if hasattr(self._task, 'start_after') and self._task.start_after:
-            if datetime.datetime.now() < self._task.start_after:
-                return False, 5.0
-        if hasattr(self._task, 'max_run_count') and self._task.max_run_count:
-            if (self._task.total_run_count or 0) >= self._task.max_run_count:
-                return False, 5.0
         if self._task.run_immediately:
             # figure out when the schedule would run next anyway
             _, n = self.schedule.is_due(self.last_run_at)
@@ -71,11 +61,10 @@ class MongoScheduleEntry(ScheduleEntry):
         return self.schedule.is_due(self.last_run_at)
 
     def __repr__(self):
-        return (u'<{0} ({1} {2}(*{3}, **{4}) {{5}})>'.format(
-            self.__class__.__name__,
+        return '<MongoScheduleEntry ({0} {1}(*{2}, **{3}) {{4}})>'.format(
             self.name, self.task, self.args,
             self.kwargs, self.schedule,
-        ))
+        )
 
     def reserve(self, entry):
         new_entry = Scheduler.reserve(self, entry)
@@ -87,10 +76,7 @@ class MongoScheduleEntry(ScheduleEntry):
         if self.last_run_at and self._task.last_run_at and self.last_run_at > self._task.last_run_at:
             self._task.last_run_at = self.last_run_at
         self._task.run_immediately = False
-        try:
-            self._task.save(save_condition={})
-        except Exception:
-            get_logger(__name__).error(traceback.format_exc())
+        self._task.save()
 
 
 class MongoScheduler(Scheduler):
@@ -101,30 +87,27 @@ class MongoScheduler(Scheduler):
 
     Entry = MongoScheduleEntry
 
-    Model = PeriodicTask
-
     def __init__(self, *args, **kwargs):
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
             db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
         else:
             db = "celery"
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            self._mongo = mongoengine.connect(
-                db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
+            self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                                      current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                                      db, self.Model._get_collection().name)
+                    current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
+                    db, get_periodic_task_collection())
         else:
             self._mongo = mongoengine.connect(db)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                                      "mongodb://localhost",
-                                      db, self.Model._get_collection().name)
+                    "mongodb://localhost",
+                    db, get_periodic_task_collection())
 
         self._schedule = {}
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
-                             or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
+                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
     def setup_schedule(self):
         pass
@@ -139,37 +122,17 @@ class MongoScheduler(Scheduler):
     def get_from_database(self):
         self.sync()
         d = {}
-        for doc in self.Model.objects(enabled=True):
-            d[doc.name] = self.Entry(doc)
+        for doc in PeriodicTask.objects():
+            d[doc.name] = MongoScheduleEntry(doc)
         return d
-
-    def verify_entry_exist(self, entry):
-        if self.Model.objects(id=entry.id):
-            return True
-        else:
-            get_logger(__name__).warning(
-                "entry id : %s is not exist", entry.id)
-            return False
 
     @property
     def schedule(self):
         if self.requires_update():
-            _schedule_bk = self._schedule.keys()
-            print _schedule_bk
             self._schedule = self.get_from_database()
-            print '_schedule_bk'
-            print _schedule_bk
-            print 'self._schedule.keys()'
-            print self._schedule.keys()
-            if self._schedule.keys() != _schedule_bk:
-                if self._heap is not None and _schedule_bk is not None:
-                    print 'self._heap'
-                    print self._heap
-                    self._heap = None
             self._last_updated = datetime.datetime.now()
         return self._schedule
 
     def sync(self):
         for entry in self._schedule.values():
-            if self.verify_entry_exist(entry):
-                entry.save()
+            entry.save()
