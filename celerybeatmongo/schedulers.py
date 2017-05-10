@@ -7,6 +7,7 @@
 import mongoengine
 import traceback
 import datetime
+import copy
 
 from celerybeatmongo.models import PeriodicTask
 from celery.beat import Scheduler, ScheduleEntry
@@ -22,6 +23,7 @@ class MongoScheduleEntry(ScheduleEntry):
         self.app = current_app._get_current_object()
         self.name = self._task.name
         self.task = self._task.task
+        self.id = self._task.id
 
         self.schedule = self._task.schedule
 
@@ -107,21 +109,22 @@ class MongoScheduler(Scheduler):
         else:
             db = "celery"
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
+            self._mongo = mongoengine.connect(
+                db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                    db, self.Model._get_collection().name)
+                                      current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
+                                      db, self.Model._get_collection().name)
         else:
             self._mongo = mongoengine.connect(db)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    "mongodb://localhost",
-                    db, self.Model._get_collection().name)
+                                      "mongodb://localhost",
+                                      db, self.Model._get_collection().name)
 
         self._schedule = {}
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
-                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
+                             or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
     def setup_schedule(self):
         pass
@@ -136,17 +139,30 @@ class MongoScheduler(Scheduler):
     def get_from_database(self):
         self.sync()
         d = {}
-        for doc in self.Model.objects():
+        for doc in self.Model.objects(enabled=True):
             d[doc.name] = self.Entry(doc)
         return d
+
+    def verify_entry_exist(self, entry):
+        if self.Model.objects(id=entry.id):
+            return True
+        else:
+            get_logger(__name__).warning(
+                "entry id : %s is not exist", entry.id)
+            return False
 
     @property
     def schedule(self):
         if self.requires_update():
+            _schedule_bk = self._schedule.keys()
             self._schedule = self.get_from_database()
+            if self._schedule.keys() != _schedule_bk:
+                if self._heap is not None and _schedule_bk is not None:
+                    self._heap = None
             self._last_updated = datetime.datetime.now()
         return self._schedule
 
     def sync(self):
         for entry in self._schedule.values():
-            entry.save()
+            if self.verify_entry_exist(entry):
+                entry.save()
