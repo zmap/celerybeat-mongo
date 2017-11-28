@@ -89,7 +89,8 @@ class MongoScheduleEntry(ScheduleEntry):
             self._task.save(save_condition={})
         except Exception:
             get_logger(__name__).error(traceback.format_exc())
-
+        except mongoengine.errors.NotUniqueError:
+            pass
 
 class MongoScheduler(Scheduler):
 
@@ -149,4 +150,7 @@ class MongoScheduler(Scheduler):
 
     def sync(self):
         for entry in self._schedule.values():
-            entry.save()
+            try:
+                entry.save()
+            except mongoengine.errors.NotUniqueError:
+                pass
