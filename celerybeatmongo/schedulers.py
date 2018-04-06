@@ -151,6 +151,10 @@ class MongoScheduler(Scheduler):
     def sync(self):
         for entry in self._schedule.values():
             try:
+		entry.kwargs.update({
+                    'date_ref': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+            	})
+
                 entry.save()
             except mongoengine.errors.NotUniqueError:
                 pass
