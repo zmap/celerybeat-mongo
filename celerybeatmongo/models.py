@@ -82,13 +82,16 @@ class PeriodicTask(DynamicDocument):
     queue = StringField()
     exchange = StringField()
     routing_key = StringField()
+    soft_time_limit = IntField()
 
     expires = DateTimeField()
+    start_after = DateTimeField()
     enabled = BooleanField(default=False)
 
     last_run_at = DateTimeField()
 
-    total_run_count = IntField(min_value=0)
+    total_run_count = IntField(min_value=0, default=0)
+    max_run_count = IntField(min_value=0, default=0)
 
     date_changed = DateTimeField()
     description = StringField()
