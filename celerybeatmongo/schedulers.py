@@ -90,6 +90,8 @@ class MongoScheduleEntry(ScheduleEntry):
             self._task.save(save_condition={})
         except Exception:
             get_logger(__name__).error(traceback.format_exc())
+        except mongoengine.errors.NotUniqueError:
+            pass
 
 
 class MongoScheduler(Scheduler):
@@ -110,19 +112,19 @@ class MongoScheduler(Scheduler):
         if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
             self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                    db, self.Model._get_collection().name)
+                                      current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
+                                      db, self.Model._get_collection().name)
         else:
             self._mongo = mongoengine.connect(db)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    "mongodb://localhost",
-                    db, self.Model._get_collection().name)
+                                      "mongodb://localhost",
+                                      db, self.Model._get_collection().name)
 
         self._schedule = {}
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
-                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
+                             or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
     def setup_schedule(self):
         pass
@@ -150,4 +152,11 @@ class MongoScheduler(Scheduler):
 
     def sync(self):
         for entry in self._schedule.values():
-            entry.save()
+            try:
+                entry.kwargs.update({
+                    'date_ref': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+                })
+
+                entry.save()
+            except mongoengine.errors.NotUniqueError:
+                pass
