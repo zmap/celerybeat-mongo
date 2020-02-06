@@ -11,9 +11,9 @@ import celery.schedules
 
 
 def get_periodic_task_collection():
-    if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_COLLECTION") \
-            and current_app.conf.CELERY_MONGODB_SCHEDULER_COLLECTION:
-        return current_app.conf.CELERY_MONGODB_SCHEDULER_COLLECTION
+    if hasattr(current_app.conf, "mongodb_scheduler_collection") \
+            and current_app.conf.get("mongodb_scheduler_collection"):
+        return current_app.conf.get("mongodb_scheduler_collection")
     return "schedules"
 
 

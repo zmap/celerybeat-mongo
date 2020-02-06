@@ -103,17 +103,22 @@ class MongoScheduler(Scheduler):
     Model = PeriodicTask
 
     def __init__(self, *args, **kwargs):
-        if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
-            db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
+        import pdb; pdb.set_trace()
+        if hasattr(current_app.conf, "mongodb_scheduler_db"):
+            db = current_app.conf.get("mongodb_scheduler_db")
         else:
             db = "celery"
-        if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
+        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias"):
+            alias = current_app.conf.get('mongodb_scheduler_connection_alias')
+        else:
+            alias = "default"
+        if hasattr(current_app.conf, "mongodb_scheduler_url"):
+            self._mongo = mongoengine.connect(db, host=current_app.conf.get("mongodb_scheduler_url"), alias=alias)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
+                    current_app.conf.get("mongodb_scheduler_url"),
                     db, self.Model._get_collection().name)
         else:
-            self._mongo = mongoengine.connect(db)
+            self._mongo = mongoengine.connect(db, alias=alias)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     "mongodb://localhost",
                     db, self.Model._get_collection().name)
