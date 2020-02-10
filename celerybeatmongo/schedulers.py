@@ -103,20 +103,31 @@ class MongoScheduler(Scheduler):
     Model = PeriodicTask
 
     def __init__(self, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        if hasattr(current_app.conf, "mongodb_scheduler_db"):
-            db = current_app.conf.get("mongodb_scheduler_db")
+        if hasattr(current_app.conf, "mongodb_scheduler_db") \
+            or hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
+            try:
+                db = current_app.conf.get("mongodb_scheduler_db")
+            except:
+                db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
         else:
             db = "celery"
-        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias"):
-            alias = current_app.conf.get('mongodb_scheduler_connection_alias')
+        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias") \
+            or hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
+            try:
+                alias = current_app.conf.get('mongodb_scheduler_connection_alias')
+            except:
+                alias = current_app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
         else:
             alias = "default"
-        if hasattr(current_app.conf, "mongodb_scheduler_url"):
-            self._mongo = mongoengine.connect(db, host=current_app.conf.get("mongodb_scheduler_url"), alias=alias)
+        if hasattr(current_app.conf, "mongodb_scheduler_url") \
+            or hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
+            try:
+                host = current_app.conf.get('mongodb_scheduler_url')
+            except:
+                host = current_app.conf.CELERY_MONGODB_SCHEDULER_URL
+            self._mongo = mongoengine.connect(db, host=host, alias=alias)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    current_app.conf.get("mongodb_scheduler_url"),
-                    db, self.Model._get_collection().name)
+                    host, db, self.Model._get_collection().name)
         else:
             self._mongo = mongoengine.connect(db, alias=alias)
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
