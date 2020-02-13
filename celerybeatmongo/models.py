@@ -11,14 +11,10 @@ import celery.schedules
 
 
 def get_periodic_task_collection():
-    if hasattr(current_app.conf, "mongodb_scheduler_collection") \
-        or hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_COLLECTION"):
-        try:
-            collections = current_app.conf.get("mongodb_scheduler_collection")
-        except:
-            collections = current_app.conf.CELERY_MONGODB_SCHEDULER_COLLECTION
-        if collections:
-            return collections
+    if hasattr(current_app.conf, "mongodb_scheduler_collection"):
+        return current_app.conf.get("mongodb_scheduler_collection")
+    elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_COLLECTION"):
+        return current_app.conf.CELERY_MONGODB_SCHEDULER_COLLECTION
     return "schedules"
 
 
