@@ -103,17 +103,33 @@ class MongoScheduler(Scheduler):
     Model = PeriodicTask
 
     def __init__(self, *args, **kwargs):
-        if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
+        if hasattr(current_app.conf, "mongodb_scheduler_db"):
+            db = current_app.conf.get("mongodb_scheduler_db")
+        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
             db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
         else:
             db = "celery"
-        if hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            self._mongo = mongoengine.connect(db, host=current_app.conf.CELERY_MONGODB_SCHEDULER_URL)
-            get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    current_app.conf.CELERY_MONGODB_SCHEDULER_URL,
-                    db, self.Model._get_collection().name)
+
+        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias"):
+            alias = current_app.conf.get('mongodb_scheduler_connection_alias')
+        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
+            alias = current_app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
         else:
-            self._mongo = mongoengine.connect(db)
+            alias = "default"
+
+        if hasattr(current_app.conf, "mongodb_scheduler_url"):
+            host = current_app.conf.get('mongodb_scheduler_url')
+        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
+            host = current_app.conf.CELERY_MONGODB_SCHEDULER_URL
+        else:
+            host = None
+
+        self._mongo = mongoengine.connect(db, host=host, alias=alias)
+
+        if host:
+            get_logger(__name__).info("backend scheduler using %s/%s:%s",
+                    host, db, self.Model._get_collection().name)
+        else:
             get_logger(__name__).info("backend scheduler using %s/%s:%s",
                     "mongodb://localhost",
                     db, self.Model._get_collection().name)
