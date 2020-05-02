@@ -108,8 +108,6 @@ class PeriodicTask(DynamicDocument):
     description = StringField()
 
     run_immediately = BooleanField()
-
-    #objects = managers.PeriodicTaskManager()
     no_changes = False
 
     def clean(self):
