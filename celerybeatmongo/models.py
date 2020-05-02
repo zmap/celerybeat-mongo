@@ -23,16 +23,21 @@ PERIODS = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
 
 
 class PeriodicTask(DynamicDocument):
-    """mongo database model that represents a periodic task"""
+    """MongoDB model that represents a periodic task"""
 
     meta = {'collection': get_periodic_task_collection(),
             'allow_inheritance': True}
 
     class Interval(EmbeddedDocument):
-        meta = {'allow_inheritance': True}
+        """Schedule executing on a regular interval.
 
+        Example: execute every 4 days
+        every=4, period="days"
+        """
         every = IntField(min_value=0, default=0, required=True)
         period = StringField(choices=PERIODS)
+
+        meta = {'allow_inheritance': True}
 
         @property
         def schedule(self):
@@ -48,13 +53,18 @@ class PeriodicTask(DynamicDocument):
             return 'every {0.every} {0.period}'.format(self)
 
     class Crontab(EmbeddedDocument):
-        meta = {'allow_inheritance': True}
+        """Crontab-like schedule.
 
+        Example:  Run every hour at 0 minutes for days of month 10-15
+        minute="0", hour="*", day_of_week="*", day_of_month="10-15", month_of_year="*"
+        """
         minute = StringField(default='*', required=True)
         hour = StringField(default='*', required=True)
         day_of_week = StringField(default='*', required=True)
         day_of_month = StringField(default='*', required=True)
         month_of_year = StringField(default='*', required=True)
+
+        meta = {'allow_inheritance': True}
 
         @property
         def schedule(self):
