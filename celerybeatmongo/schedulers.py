@@ -14,6 +14,9 @@ from celery.utils.log import get_logger
 from celery import current_app
 
 
+logger = get_logger(__name__)
+
+
 class MongoScheduleEntry(ScheduleEntry):
 
     def __init__(self, task):
@@ -89,7 +92,7 @@ class MongoScheduleEntry(ScheduleEntry):
         try:
             self._task.save(save_condition={})
         except Exception:
-            get_logger(__name__).error(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
 
 class MongoScheduler(Scheduler):
@@ -127,18 +130,16 @@ class MongoScheduler(Scheduler):
         self._mongo = mongoengine.connect(db, host=host, alias=alias)
 
         if host:
-            get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    host, db, self.Model._get_collection().name)
+            logger.info("backend scheduler using %s/%s:%s",
+                        host, db, self.Model._get_collection().name)
         else:
-            get_logger(__name__).info("backend scheduler using %s/%s:%s",
-                    "mongodb://localhost",
-                    db, self.Model._get_collection().name)
-
+            logger.info("backend scheduler using %s/%s:%s",
+                        "mongodb://localhost", db, self.Model._get_collection().name)
         self._schedule = {}
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
-                or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
+                             or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
     def setup_schedule(self):
         pass
