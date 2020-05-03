@@ -97,7 +97,7 @@ class PeriodicTask(DynamicDocument):
 
     expires = DateTimeField()
     start_after = DateTimeField()
-    enabled = BooleanField(default=False)
+    enabled = BooleanField(default=True)
 
     last_run_at = DateTimeField()
 
