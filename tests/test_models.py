@@ -1,6 +1,6 @@
 
 import unittest
-from mongoengine import connect, disconnect, ValidationError
+from mongoengine import ValidationError
 
 from celerybeatmongo.models import PeriodicTask
 from tests import BeatMongoCase
