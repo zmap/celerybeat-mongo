@@ -1,6 +1,8 @@
 
+import importlib
 import unittest
 from mongoengine import ValidationError
+from celery import Celery
 
 from celerybeatmongo.models import PeriodicTask
 from tests import BeatMongoCase
@@ -54,3 +56,12 @@ class PeriodicTaskTest(unittest.TestCase):
         with self.assertRaises(ValidationError) as err:
             periodic.save()
         self.assertTrue("Cannot define both interval and crontab schedule." in err.exception.message)
+
+    def test_collection_name(self):
+        app = Celery()
+        app.conf.update(**{"mongodb_scheduler_collection": "schedules2"})
+        import celerybeatmongo
+        importlib.reload(celerybeatmongo)
+        importlib.reload(celerybeatmongo.models)
+        from celerybeatmongo.models import PeriodicTask
+        self.assertEqual("schedules2", PeriodicTask._get_collection().name)
