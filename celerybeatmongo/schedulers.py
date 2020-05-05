@@ -121,17 +121,17 @@ class MongoScheduler(Scheduler):
             return True
         return self._last_updated + self.UPDATE_INTERVAL < datetime.datetime.now()
 
-    def get_from_database(self):
+    def all_as_schedule(self):
         self.sync()
-        d = {}
-        for doc in self.Model.objects():
-            d[doc.name] = self.Entry(doc)
-        return d
+        scheds = {}
+        for pt in self.Model.objects.filter(enabled=True):
+            scheds[pt.name] = self.Entry(pt)
+        return scheds
 
     @property
     def schedule(self):
         if self.requires_update():
-            self._schedule = self.get_from_database()
+            self._schedule = self.all_as_schedule()
             self._last_updated = datetime.datetime.now()
         return self._schedule
 
