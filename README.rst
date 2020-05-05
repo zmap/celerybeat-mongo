@@ -1,12 +1,12 @@
 celerybeat-mongo
 ################
 
-This is a Celery Beat Scheduler (http://celery.readthedocs.org/en/latest/userguide/periodic-tasks.html)
+This is a `Celery Beat Scheduler <http://celery.readthedocs.org/en/latest/userguide/periodic-tasks.html/>`_
 that stores both the schedules themselves and their status
-information in a backend Mongo database. It can be installed by 
+information in a backend Mongo database. It can be installed by
 installing the celerybeat-mongo Python egg::
 
-    # pip install celerybeat-mongo 
+    # pip install celerybeat-mongo
 
 And specifying the scheduler when running Celery Beat, e.g.::
 

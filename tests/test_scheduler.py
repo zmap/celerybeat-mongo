@@ -1,6 +1,6 @@
 
 import unittest
-from mongoengine import disconnect_all
+from mongoengine import disconnect
 from celery import Celery
 
 
@@ -14,15 +14,16 @@ class MongoSchedulerTest(unittest.TestCase):
         self.app.conf.update(**conf)
 
     def tearDown(self):
-        disconnect_all()
+        disconnect()
 
     def test_all_as_schedule(self):
         from celerybeatmongo.schedulers import MongoScheduler
         from celerybeatmongo.models import PeriodicTask
+        PeriodicTask.drop_collection()
 
-        PeriodicTask.objects.create(name="a", task="foo", enabled=True, interval=PeriodicTask.Interval(every=1, period="days"))
-        PeriodicTask.objects.create(name="b", task="foo", enabled=True, interval=PeriodicTask.Interval(every=2, period="days"))
-        PeriodicTask.objects.create(name="c", task="foo", enabled=False, interval=PeriodicTask.Interval(every=3, period="days"))
+        PeriodicTask.objects.create(name="a1", task="foo", enabled=True, interval=PeriodicTask.Interval(every=1, period="days"))
+        PeriodicTask.objects.create(name="b1", task="foo", enabled=True, interval=PeriodicTask.Interval(every=2, period="days"))
+        PeriodicTask.objects.create(name="c2", task="foo", enabled=False, interval=PeriodicTask.Interval(every=3, period="days"))
 
         scheduler = MongoScheduler(app=self.app)
         self.assertEqual(2, len(scheduler.all_as_schedule())

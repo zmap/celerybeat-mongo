@@ -17,13 +17,13 @@ class IntervalScheduleTest(BeatMongoCase):
             periodic.save()
 
     def test_scheduler(self):
-        periodic = PeriodicTask(task="foo")
+        periodic = PeriodicTask(name="my task", task="foo")
         periodic.interval = PeriodicTask.Interval(every=1, period="days")
         periodic.save()
         self.assertIsNotNone(periodic.schedule)
 
     def test_str(self):
-        periodic = PeriodicTask(task="foo")
+        periodic = PeriodicTask(name="my task", task="foo")
         periodic.interval = PeriodicTask.Interval(every=1, period="days")
         self.assertEqual("every day", str(periodic.interval))
 
@@ -34,7 +34,7 @@ class IntervalScheduleTest(BeatMongoCase):
 class CrontabScheduleTest(unittest.TestCase):
 
     def test_str(self):
-        periodic = PeriodicTask(task="foo")
+        periodic = PeriodicTask(name="my task", task="foo")
         periodic.crontab = PeriodicTask.Crontab(minute="0", hour="*", day_of_week="*",
                                                 day_of_month="10-15", month_of_year="*")
         self.assertEqual("0 * * 10-15 * (m/h/d/dM/MY)", str(periodic.crontab))
