@@ -1,0 +1,11 @@
+.. _changelog:
+
+================
+ Change history
+================
+
+0.2.1
+=====
+
+- Makes PeriodicTask.name as required field
+- Fix enabled tasks do not run when there is another schedule entry which is disabled (#37)
