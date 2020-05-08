@@ -4,7 +4,6 @@
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-import mongoengine
 import traceback
 import datetime
 
@@ -106,35 +105,6 @@ class MongoScheduler(Scheduler):
     Model = PeriodicTask
 
     def __init__(self, *args, **kwargs):
-        if hasattr(current_app.conf, "mongodb_scheduler_db"):
-            db = current_app.conf.get("mongodb_scheduler_db")
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
-            db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
-        else:
-            db = "celery"
-
-        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias"):
-            alias = current_app.conf.get('mongodb_scheduler_connection_alias')
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
-            alias = current_app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
-        else:
-            alias = "default"
-
-        if hasattr(current_app.conf, "mongodb_scheduler_url"):
-            host = current_app.conf.get('mongodb_scheduler_url')
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            host = current_app.conf.CELERY_MONGODB_SCHEDULER_URL
-        else:
-            host = None
-
-        self._mongo = mongoengine.connect(db, host=host, alias=alias)
-
-        if host:
-            logger.info("backend scheduler using %s/%s:%s",
-                        host, db, self.Model._get_collection().name)
-        else:
-            logger.info("backend scheduler using %s/%s:%s",
-                        "mongodb://localhost", db, self.Model._get_collection().name)
         self._schedule = {}
         self._last_updated = None
         Scheduler.__init__(self, *args, **kwargs)
