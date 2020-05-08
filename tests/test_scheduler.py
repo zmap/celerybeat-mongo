@@ -26,5 +26,5 @@ class MongoSchedulerTest(unittest.TestCase):
         PeriodicTask.objects.create(name="c2", task="foo", enabled=False, interval=PeriodicTask.Interval(every=3, period="days"))
 
         scheduler = MongoScheduler(app=self.app)
-        self.assertEqual(2, len(scheduler.all_as_schedule())
+        self.assertEqual(2, len(scheduler.get_from_database())
                          , "all_as_schedule should return just enabled tasks")
