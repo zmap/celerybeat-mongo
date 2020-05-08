@@ -10,68 +10,79 @@ import celery.schedules
 
 from . import COLLECTION_NAME
 
+DAYS = 'days'
+HOURS = 'hours'
+MINUTES = 'minutes'
+SECONDS = 'seconds'
+MICROSECONDS = 'microseconds'
+
 #: Authorized values for PeriodicTask.Interval.period
-PERIODS = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
+PERIODS = (DAYS, HOURS, MINUTES, SECONDS, MICROSECONDS)
+
+
+class Interval(EmbeddedDocument):
+    """Schedule executing on a regular interval.
+
+    Example: execute every 4 days
+    every=4, period="days"
+    """
+    DAYS = DAYS
+    HOURS = HOURS
+    MINUTES = MINUTES
+    SECONDS = SECONDS
+    MICROSECONDS = MICROSECONDS
+
+    every = IntField(min_value=0, default=0, required=True)
+    period = StringField(choices=PERIODS)
+
+    meta = {'allow_inheritance': True}
+
+    @property
+    def schedule(self):
+        return celery.schedules.schedule(datetime.timedelta(**{self.period: self.every}))
+
+    @property
+    def period_singular(self):
+        return self.period[:-1]
+
+    def __unicode__(self):
+        if self.every == 1:
+            return 'every {0.period_singular}'.format(self)
+        return 'every {0.every} {0.period}'.format(self)
+
+
+class Crontab(EmbeddedDocument):
+    """Crontab-like schedule.
+
+    Example:  Run every hour at 0 minutes for days of month 10-15
+    minute="0", hour="*", day_of_week="*", day_of_month="10-15", month_of_year="*"
+    """
+    minute = StringField(default='*', required=True)
+    hour = StringField(default='*', required=True)
+    day_of_week = StringField(default='*', required=True)
+    day_of_month = StringField(default='*', required=True)
+    month_of_year = StringField(default='*', required=True)
+
+    meta = {'allow_inheritance': True}
+
+    @property
+    def schedule(self):
+        return celery.schedules.crontab(minute=self.minute,
+                                        hour=self.hour,
+                                        day_of_week=self.day_of_week,
+                                        day_of_month=self.day_of_month,
+                                        month_of_year=self.month_of_year)
+
+    def __unicode__(self):
+        rfield = lambda f: f and str(f).replace(' ', '') or '*'
+        return '{0} {1} {2} {3} {4} (m/h/d/dM/MY)'.format(
+            rfield(self.minute), rfield(self.hour), rfield(self.day_of_week),
+            rfield(self.day_of_month), rfield(self.month_of_year),
+        )
 
 
 class PeriodicTask(DynamicDocument):
     """MongoDB model that represents a periodic task"""
-
-    meta = {'collection': COLLECTION_NAME,
-            'allow_inheritance': True}
-
-    class Interval(EmbeddedDocument):
-        """Schedule executing on a regular interval.
-
-        Example: execute every 4 days
-        every=4, period="days"
-        """
-        every = IntField(min_value=0, default=0, required=True)
-        period = StringField(choices=PERIODS)
-
-        meta = {'allow_inheritance': True}
-
-        @property
-        def schedule(self):
-            return celery.schedules.schedule(datetime.timedelta(**{self.period: self.every}))
-
-        @property
-        def period_singular(self):
-            return self.period[:-1]
-
-        def __unicode__(self):
-            if self.every == 1:
-                return 'every {0.period_singular}'.format(self)
-            return 'every {0.every} {0.period}'.format(self)
-
-    class Crontab(EmbeddedDocument):
-        """Crontab-like schedule.
-
-        Example:  Run every hour at 0 minutes for days of month 10-15
-        minute="0", hour="*", day_of_week="*", day_of_month="10-15", month_of_year="*"
-        """
-        minute = StringField(default='*', required=True)
-        hour = StringField(default='*', required=True)
-        day_of_week = StringField(default='*', required=True)
-        day_of_month = StringField(default='*', required=True)
-        month_of_year = StringField(default='*', required=True)
-
-        meta = {'allow_inheritance': True}
-
-        @property
-        def schedule(self):
-            return celery.schedules.crontab(minute=self.minute,
-                                     hour=self.hour,
-                                     day_of_week=self.day_of_week,
-                                     day_of_month=self.day_of_month,
-                                     month_of_year=self.month_of_year)
-
-        def __unicode__(self):
-            rfield = lambda f: f and str(f).replace(' ', '') or '*'
-            return '{0} {1} {2} {3} {4} (m/h/d/dM/MY)'.format(
-                rfield(self.minute), rfield(self.hour), rfield(self.day_of_week),
-                rfield(self.day_of_month), rfield(self.month_of_year),
-            )
 
     name = StringField(required=True, unique=True)
     task = StringField(required=True)
@@ -96,11 +107,20 @@ class PeriodicTask(DynamicDocument):
     total_run_count = IntField(min_value=0, default=0)
     max_run_count = IntField(min_value=0, default=0)
 
-    date_changed = DateTimeField()
+    date_changed = DateTimeField(auto_now_add=False, auto_now=True)
     description = StringField()
 
     run_immediately = BooleanField()
     no_changes = False
+
+    class Interval(Interval):
+        pass
+
+    class Crontab(Crontab):
+        pass
+
+    meta = {'collection': COLLECTION_NAME,
+            'allow_inheritance': True}
 
     def clean(self):
         """validation by mongoengine to ensure that you only have

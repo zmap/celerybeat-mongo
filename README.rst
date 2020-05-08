@@ -36,19 +36,19 @@ create the interval object::
     from celery import Celery
 
     config = {
-        "mongodb_scheduler_db": "test_stormy",
+        "mongodb_scheduler_db": "my_project",
         "mongodb_scheduler_url": "mongodb://localhost:27017",
     }
 
     app = Celery('hello', broker='redis://localhost//')
     app.conf.update(**config)
 
-    from celerybeatmongo.models import PeriodicTask
+    from celerybeatmongo.models import PeriodicTask, Interval
 
     periodic = PeriodicTask(
         name='Importing contacts',
         task="proj.import_contacts"
-        interval=PeriodicTask.Interval(every=10, period="seconds") # executes every 10 seconds.
+        interval=Interval(every=10, period="seconds") # executes every 10 seconds.
     )
     periodic.save()
 
@@ -66,19 +66,16 @@ A crontab schedule has the fields: minute, hour, day_of_week, day_of_month and m
     from celery import Celery
 
     config = {
-        "mongodb_scheduler_db": "test_stormy",
+        "mongodb_scheduler_db": "my_project",
         "mongodb_scheduler_url": "mongodb://localhost:27017",
     }
 
     app = Celery('hello', broker='redis://localhost//')
     app.conf.update(**config)
 
-    from celerybeatmongo.models import PeriodicTask
+    from celerybeatmongo.models import PeriodicTask, Crontab
 
     periodic = PeriodicTask(name="Send Email Notification", task="proj.notify_customers")
-    periodic.crontab = PeriodicTask.Crontab(minute="30",
-                                            hour="7",
-                                            day_of_week="1",
-                                            day_of_month="0",
-                                            month_of_year="*")
+    periodic.crontab = Crontab(minute="30", hour="7", day_of_week="1",
+                               day_of_month="0", month_of_year="*")
     periodic.save()
