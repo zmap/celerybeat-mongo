@@ -105,25 +105,24 @@ class MongoScheduler(Scheduler):
 
     Model = PeriodicTask
 
-    def __init__(self, *args, **kwargs):
-        if hasattr(current_app.conf, "mongodb_scheduler_db"):
-            db = current_app.conf.get("mongodb_scheduler_db")
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
-            db = current_app.conf.CELERY_MONGODB_SCHEDULER_DB
+    def __init__(self, app, *args, **kwargs):
+        if hasattr(app.conf, "mongodb_scheduler_db"):
+            db = app.conf.get("mongodb_scheduler_db")
+        elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
+            db = app.conf.CELERY_MONGODB_SCHEDULER_DB
         else:
             db = "celery"
-
-        if hasattr(current_app.conf, "mongodb_scheduler_connection_alias"):
-            alias = current_app.conf.get('mongodb_scheduler_connection_alias')
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
-            alias = current_app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
+        if hasattr(app.conf, "mongodb_scheduler_connection_alias"):
+            alias = app.conf.get('mongodb_scheduler_connection_alias')
+        elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
+            alias = app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
         else:
             alias = "default"
 
-        if hasattr(current_app.conf, "mongodb_scheduler_url"):
-            host = current_app.conf.get('mongodb_scheduler_url')
-        elif hasattr(current_app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
-            host = current_app.conf.CELERY_MONGODB_SCHEDULER_URL
+        if hasattr(app.conf, "mongodb_scheduler_url"):
+            host = app.conf.get('mongodb_scheduler_url')
+        elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
+            host = app.conf.CELERY_MONGODB_SCHEDULER_URL
         else:
             host = None
 
@@ -137,7 +136,7 @@ class MongoScheduler(Scheduler):
                         "mongodb://localhost", db, self.Model._get_collection().name)
         self._schedule = {}
         self._last_updated = None
-        Scheduler.__init__(self, *args, **kwargs)
+        Scheduler.__init__(self, app, *args, **kwargs)
         self.max_interval = (kwargs.get('max_interval')
                              or self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 5)
 
