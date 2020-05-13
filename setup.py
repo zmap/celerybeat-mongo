@@ -10,7 +10,7 @@ setup(
     author_email="zakird@gmail.com",
     maintainer="Zakir Durumeric",
     maintainer_email="zakird@gmail.com",
-    keywords="python celery beat mongo",
+    keywords="python celery beat periodic task mongodb",
     packages=[
         "celerybeatmongo"
     ],
