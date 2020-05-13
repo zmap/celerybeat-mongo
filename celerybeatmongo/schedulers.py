@@ -166,5 +166,6 @@ class MongoScheduler(Scheduler):
         return self._schedule
 
     def sync(self):
+        logger.debug('Writing entries...')
         for entry in self._schedule.values():
             entry.save()
