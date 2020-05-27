@@ -38,7 +38,7 @@ class CrontabScheduleTest(unittest.TestCase):
         self.assertEqual("0 * * 10-15 * (m/h/d/dM/MY)", str(periodic.crontab))
 
 
-class PeriodicTaskTest(unittest.TestCase):
+class PeriodicTaskTest(BeatMongoCase):
 
     def test_must_define_interval_or_crontab(self):
         with self.assertRaises(ValidationError) as err:
@@ -54,3 +54,17 @@ class PeriodicTaskTest(unittest.TestCase):
         with self.assertRaises(ValidationError) as err:
             periodic.save()
         self.assertTrue("Cannot define both interval and crontab schedule." in err.exception.message)
+
+    def test_creation_date(self):
+        periodic = PeriodicTask(task="foo")
+        periodic.interval = PeriodicTask.Interval(every=1, period="days")
+        self.assertIsNone(periodic.date_creation,
+                          "date_creation should be none on the first object instantion")
+        periodic.save()
+        self.assertIsNotNone(periodic.date_creation)
+        date_creation = periodic.date_creation
+
+        periodic.name = "I'm changing"
+        periodic.save()
+        self.assertEqual(date_creation, periodic.date_creation,
+                         "Update object should not change date_creation value")

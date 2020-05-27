@@ -5,7 +5,10 @@
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 import datetime
+
 from mongoengine import *
+from mongoengine import signals
+
 from celery import current_app
 import celery.schedules
 
@@ -105,10 +108,16 @@ class PeriodicTask(DynamicDocument):
     max_run_count = IntField(min_value=0, default=0)
 
     date_changed = DateTimeField()
+    date_creation = DateTimeField()
     description = StringField()
 
     run_immediately = BooleanField()
     no_changes = False
+
+    @classmethod
+    def pre_save(cls, sender, document, **kwargs):
+        if not document.date_creation:
+            document.date_creation = datetime.datetime.now()
 
     def clean(self):
         """validation by mongoengine to ensure that you only have
@@ -138,3 +147,6 @@ class PeriodicTask(DynamicDocument):
         else:
             raise Exception("must define interval or crontab schedule")
         return fmt.format(self)
+
+
+signals.pre_save.connect(PeriodicTask.pre_save, sender=PeriodicTask)

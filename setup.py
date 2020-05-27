@@ -19,6 +19,7 @@ setup(
         'pymongo',
         'mongoengine',
         'celery',
+        'blinker'
     ],
     classifiers=[
         'Development Status :: 2 - Production/Stable',
