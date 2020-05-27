@@ -1,0 +1,4 @@
+celery
+mongoengine
+pymongo
+blinker
