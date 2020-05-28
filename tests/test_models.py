@@ -68,3 +68,16 @@ class PeriodicTaskTest(BeatMongoCase):
         periodic.save()
         self.assertEqual(date_creation, periodic.date_creation,
                          "Update object should not change date_creation value")
+
+    def test_date_changed(self):
+        periodic = PeriodicTask(task="foo")
+        periodic.interval = PeriodicTask.Interval(every=1, period="days")
+
+        self.assertIsNone(periodic.date_changed)
+        periodic.save()
+        self.assertIsNotNone(periodic.date_changed)
+
+        date_changed = periodic.date_changed
+        periodic.name = "I'm changing now"
+        periodic.save()
+        self.assertGreater(periodic.date_changed, date_changed)

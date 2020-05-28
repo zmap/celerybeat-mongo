@@ -4,8 +4,7 @@
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-import datetime
-
+from datetime import datetime, timedelta
 from mongoengine import *
 from mongoengine import signals
 
@@ -44,7 +43,7 @@ class PeriodicTask(DynamicDocument):
 
         @property
         def schedule(self):
-            return celery.schedules.schedule(datetime.timedelta(**{self.period: self.every}))
+            return celery.schedules.schedule(timedelta(**{self.period: self.every}))
 
         @property
         def period_singular(self):
@@ -117,7 +116,8 @@ class PeriodicTask(DynamicDocument):
     @classmethod
     def pre_save(cls, sender, document, **kwargs):
         if not document.date_creation:
-            document.date_creation = datetime.datetime.now()
+            document.date_creation = datetime.now()
+        document.date_changed = datetime.now()
 
     def clean(self):
         """validation by mongoengine to ensure that you only have
