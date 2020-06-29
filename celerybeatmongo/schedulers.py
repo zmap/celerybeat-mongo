@@ -8,6 +8,7 @@ import mongoengine
 import traceback
 import datetime
 
+from celery import schedules
 from celerybeatmongo.models import PeriodicTask
 from celery.beat import Scheduler, ScheduleEntry
 from celery.utils.log import get_logger
@@ -59,13 +60,16 @@ class MongoScheduleEntry(ScheduleEntry):
 
     def is_due(self):
         if not self._task.enabled:
-            return False, 5.0   # 5 second delay for re-enable.
+            return schedules.schedstate(False, 5.0)   # 5 second delay for re-enable.
         if hasattr(self._task, 'start_after') and self._task.start_after:
             if datetime.datetime.now() < self._task.start_after:
-                return False, 5.0
+                return schedules.schedstate(False, 5.0)
         if hasattr(self._task, 'max_run_count') and self._task.max_run_count:
             if (self._task.total_run_count or 0) >= self._task.max_run_count:
-                return False, 5.0
+                self._task.enabled = False
+                self._task.save()
+                # Don't recheck
+                return schedules.schedstate(False, None)
         if self._task.run_immediately:
             # figure out when the schedule would run next anyway
             _, n = self.schedule.is_due(self.last_run_at)
@@ -166,5 +170,6 @@ class MongoScheduler(Scheduler):
         return self._schedule
 
     def sync(self):
+        logger.debug('Writing entries...')
         for entry in self._schedule.values():
             entry.save()
