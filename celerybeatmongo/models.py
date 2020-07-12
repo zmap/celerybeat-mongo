@@ -113,11 +113,15 @@ class PeriodicTask(DynamicDocument):
     run_immediately = BooleanField()
     no_changes = False
 
-    @classmethod
-    def pre_save(cls, sender, document, **kwargs):
-        if not document.date_creation:
-            document.date_creation = datetime.now()
-        document.date_changed = datetime.now()
+    def save(self, force_insert=False, validate=True, clean=True,
+             write_concern=None, cascade=None, cascade_kwargs=None,
+             _refs=None, save_condition=None, signal_kwargs=None, **kwargs):
+        if not self.date_creation:
+            self.date_creation = datetime.now()
+        self.date_changed = datetime.now()
+        super(PeriodicTask, self).save(force_insert, validate, clean,
+                                       write_concern, cascade, cascade_kwargs, _refs,
+                                       save_condition, signal_kwargs, **kwargs)
 
     def clean(self):
         """validation by mongoengine to ensure that you only have
@@ -147,6 +151,3 @@ class PeriodicTask(DynamicDocument):
         else:
             raise Exception("must define interval or crontab schedule")
         return fmt.format(self)
-
-
-signals.pre_save.connect(PeriodicTask.pre_save, sender=PeriodicTask)

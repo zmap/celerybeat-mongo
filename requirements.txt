@@ -1,4 +1,3 @@
 celery
 mongoengine
 pymongo
-blinker
