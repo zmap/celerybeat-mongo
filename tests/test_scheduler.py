@@ -1,5 +1,5 @@
-
 import unittest
+
 from mongoengine import disconnect
 from celerybeatmongo.schedulers import MongoScheduler
 from celery import Celery
@@ -8,9 +8,7 @@ from celery import Celery
 class MongoSchedulerTest(unittest.TestCase):
 
     def setUp(self):
-        conf = {
-            "mongodb_scheduler_url": "mongomock://localhost"
-        }
+        conf = {"mongodb_scheduler_url": "mongomock://localhost"}
         self.app = Celery(**conf)
         self.app.conf.update(**conf)
         self.scheduler = MongoScheduler(app=self.app)
@@ -27,3 +25,12 @@ class MongoSchedulerTest(unittest.TestCase):
         scheduler = MongoScheduler(app=self.app)
         self.assertEqual(2, len(scheduler.get_from_database())
                          , "get_from_database should return just enabled tasks")
+
+    def test_max_interval(self):
+        scheduler = MongoScheduler(self.app, max_interval=600, sync_every_tasks=10)
+        self.assertEqual(600, scheduler.max_interval)
+
+    def test_should_create_mongo_db_connection(self):
+        scheduler = MongoScheduler(self.app, max_interval=600, sync_every_tasks=10)
+        self.assertIsNotNone(scheduler._mongo)
+        self.assertEqual(0, scheduler._mongo.db.test.count({}))
