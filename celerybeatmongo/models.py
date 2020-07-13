@@ -5,9 +5,8 @@
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 from datetime import datetime, timedelta
-from mongoengine import *
-from mongoengine import signals
 
+from mongoengine import *
 from celery import current_app
 import celery.schedules
 
