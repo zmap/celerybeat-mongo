@@ -4,8 +4,10 @@
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-import datetime
+from datetime import datetime, timedelta
 from mongoengine import *
+from mongoengine import signals
+
 from celery import current_app
 import celery.schedules
 
@@ -41,7 +43,7 @@ class PeriodicTask(DynamicDocument):
 
         @property
         def schedule(self):
-            return celery.schedules.schedule(datetime.timedelta(**{self.period: self.every}))
+            return celery.schedules.schedule(timedelta(**{self.period: self.every}))
 
         @property
         def period_singular(self):
@@ -105,10 +107,21 @@ class PeriodicTask(DynamicDocument):
     max_run_count = IntField(min_value=0, default=0)
 
     date_changed = DateTimeField()
+    date_creation = DateTimeField()
     description = StringField()
 
     run_immediately = BooleanField()
     no_changes = False
+
+    def save(self, force_insert=False, validate=True, clean=True,
+             write_concern=None, cascade=None, cascade_kwargs=None,
+             _refs=None, save_condition=None, signal_kwargs=None, **kwargs):
+        if not self.date_creation:
+            self.date_creation = datetime.now()
+        self.date_changed = datetime.now()
+        super(PeriodicTask, self).save(force_insert, validate, clean,
+                                       write_concern, cascade, cascade_kwargs, _refs,
+                                       save_condition, signal_kwargs, **kwargs)
 
     def clean(self):
         """validation by mongoengine to ensure that you only have
