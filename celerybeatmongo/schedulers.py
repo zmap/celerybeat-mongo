@@ -18,28 +18,40 @@ from celery import current_app
 logger = get_logger(__name__)
 
 
-def connect_mongo(app):
-    if hasattr(app.conf, "mongodb_scheduler_db"):
-        db = app.conf.get("mongodb_scheduler_db")
-    elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
-        db = app.conf.CELERY_MONGODB_SCHEDULER_DB
-    else:
-        db = "celery"
-    if hasattr(app.conf, "mongodb_scheduler_connection_alias"):
-        alias = app.conf.get('mongodb_scheduler_connection_alias')
-    elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
-        alias = app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
-    else:
-        alias = mongoengine.DEFAULT_CONNECTION_NAME
+def connect_mongo(app):    
+    alias = get_alias(app)
+    host = get_host(app)
+    db = get_db(app)
 
+    return mongoengine.connect(db, host=host, alias=alias)
+
+def get_host(app):
     if hasattr(app.conf, "mongodb_scheduler_url"):
         host = app.conf.get('mongodb_scheduler_url')
     elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_URL"):
         host = app.conf.CELERY_MONGODB_SCHEDULER_URL
     else:
         host = None
+    return host
 
-    return mongoengine.connect(db, host=host, alias=alias)
+def get_db(app):
+    if hasattr(app.conf, "mongodb_scheduler_db"):
+        db = app.conf.get("mongodb_scheduler_db")
+    elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_DB"):
+        db = app.conf.CELERY_MONGODB_SCHEDULER_DB
+    else:
+        db = "celery"
+    return db
+
+def get_alias(app):
+    if hasattr(app.conf, "mongodb_scheduler_connection_alias"):
+        alias = app.conf.get('mongodb_scheduler_connection_alias')
+    elif hasattr(app.conf, "CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS"):
+        alias = app.conf.CELERY_MONGODB_SCHEDULER_CONNECTION_ALIAS
+    else:
+        alias = mongoengine.DEFAULT_CONNECTION_NAME
+    return alias
+
 
 class MongoScheduleEntry(ScheduleEntry):
 
@@ -134,10 +146,17 @@ class MongoScheduler(Scheduler):
     Model = PeriodicTask
 
     def __init__(self, app, *args, **kwargs):
+        host = get_host(app)
+        db = get_db(app)
+
         self._mongo = connect_mongo(app)
 
-        logger.info("backend scheduler using %s/%s:%s",
-                        self._mongo.address, self._mongo.get_default_database().name, self.Model._get_collection().name)
+        if host:
+            logger.info("backend scheduler using %s/%s:%s",
+                        host, db, self.Model._get_collection().name)
+        else:
+            logger.info("backend scheduler using %s/%s:%s",
+                        "mongodb://localhost", db, self.Model._get_collection().name)
 
         self._schedule = {}
         self._last_updated = None
