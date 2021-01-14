@@ -118,9 +118,10 @@ class MongoScheduleEntry(ScheduleEntry):
             self._task.last_run_at = self.last_run_at
         self._task.run_immediately = False
         try:
-            self._task.save(save_condition={})
-        except Exception:
+            return self._task.save(save_condition={})
+        except Exception as ex:
             print(traceback.format_exc())
+            raise ex
 
 class MongoScheduler(Scheduler):
 
