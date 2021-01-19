@@ -132,8 +132,7 @@ class MongoScheduleEntry(ScheduleEntry):
         try:
             return self._task.save(save_condition={})
         except Exception as ex:
-            print(traceback.format_exc())
-            raise ex
+            logger.error(traceback.format_exc())
 
 class MongoScheduler(Scheduler):
 
