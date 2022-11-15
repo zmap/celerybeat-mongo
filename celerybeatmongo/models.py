@@ -6,9 +6,12 @@
 
 from datetime import datetime, timedelta
 
-from mongoengine import *
 from celery import current_app
 import celery.schedules
+
+from mongoengine.document import DynamicDocument, EmbeddedDocument
+from mongoengine.errors import ValidationError
+from mongoengine.fields import BooleanField, DateTimeField, DictField, EmbeddedDocumentField, IntField, ListField, StringField
 
 
 def get_periodic_task_collection():
@@ -118,7 +121,7 @@ class PeriodicTask(DynamicDocument):
         if not self.date_creation:
             self.date_creation = datetime.now()
         self.date_changed = datetime.now()
-        super(PeriodicTask, self).save(force_insert, validate, clean,
+        return super(PeriodicTask, self).save(force_insert, validate, clean,
                                        write_concern, cascade, cascade_kwargs, _refs,
                                        save_condition, signal_kwargs, **kwargs)
 
