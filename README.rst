@@ -47,7 +47,7 @@ create the interval object::
 
     periodic = PeriodicTask(
         name='Importing contacts',
-        task="proj.import_contacts"
+        task="proj.import_contacts",
         interval=PeriodicTask.Interval(every=10, period="seconds") # executes every 10 seconds.
     )
     periodic.save()
